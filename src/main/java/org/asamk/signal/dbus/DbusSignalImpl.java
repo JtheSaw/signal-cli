@@ -5,6 +5,7 @@ import org.asamk.signal.BaseConfig;
 import org.asamk.signal.manager.AttachmentInvalidException;
 import org.asamk.signal.manager.Manager;
 import org.asamk.signal.manager.NotMasterDeviceException;
+import org.asamk.signal.manager.api.TypingAction;
 import org.asamk.signal.manager.groups.GroupId;
 import org.asamk.signal.manager.groups.GroupInviteLinkUrl;
 import org.asamk.signal.manager.groups.GroupNotFoundException;
@@ -16,6 +17,7 @@ import org.asamk.signal.util.Util;
 import org.freedesktop.dbus.exceptions.DBusExecutionException;
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
+import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.groupsv2.GroupLinkNotActiveException;
 import org.whispersystems.signalservice.api.messages.SendMessageResult;
 import org.whispersystems.signalservice.api.util.InvalidNumberException;
@@ -23,6 +25,7 @@ import org.whispersystems.signalservice.api.util.InvalidNumberException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -107,6 +110,22 @@ public class DbusSignalImpl implements Signal {
             throw new Error.AttachmentInvalid(e.getMessage());
         } catch (IOException e) {
             throw new Error.Failure(e.getMessage());
+        }
+    }
+
+    @Override
+    public void sendTyping(
+            final String recipient, final boolean stop
+    ) throws Error.Failure, Error.GroupNotFound, Error.UntrustedIdentity {
+        try {
+            var recipients = new HashSet<String>();
+            recipients.add(recipient);
+            m.sendTypingMessage(stop ? TypingAction.STOP : TypingAction.START,
+                    recipients);
+        } catch (IOException e) {
+            throw new Error.Failure(e.getMessage());
+        } catch (UntrustedIdentityException | InvalidNumberException e) {
+            e.printStackTrace();
         }
     }
 
